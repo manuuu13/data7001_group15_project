@@ -28,6 +28,10 @@ topdf input="" output=(if input == "" { "" } else { file_stem(input) }): (_check
 venv name=DEFAULT_VENV_NAME:
 	uv venv {{ name }}
 
+# format codebase
+format:
+	uv tool run ruff format
+
 # remove the .venv folder and clear uv's internal cache
 clean:
 	uv clean
