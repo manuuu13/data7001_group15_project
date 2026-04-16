@@ -3,6 +3,7 @@ set windows-shell := ["powershell", "-NoProfile", "-Command"]
 CALL_RECIPE := just_executable() + " --justfile=" + justfile()
 RM_R := if os_family() == "windows" { "Remove-Item -Recurse" } else { "rm -r" }
 ON_ERROR_CONTINUE := if os_family() == "windows" { '; $ErrorActionPreference = "Continue"' } else { "|| true" }
+RM_PYCACHE := if os_family() == "windows" { 'Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force' } else { 'find . -depth -type d -name "__pycache__" -exec rm -r {} +' }
 
 DEFAULT_VENV_NAME := ".venv"
 
@@ -28,7 +29,13 @@ topdf input="" output=(if input == "" { "" } else { file_stem(input) }): (_check
 venv name=DEFAULT_VENV_NAME:
 	uv venv {{ name }}
 
-# remove the .venv folder and clear uv's internal cache
+# format codebase
+format:
+	uv tool run ruff format
+
+# cleans up the project
 clean:
 	uv clean
+	{{ RM_R }} .ruff_cache 		{{ ON_ERROR_CONTINUE }}
 	{{ RM_R }} .venv 			{{ ON_ERROR_CONTINUE }}
+	{{ RM_PYCACHE }} 			{{ ON_ERROR_CONTINUE }}

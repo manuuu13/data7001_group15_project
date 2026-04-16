@@ -54,3 +54,33 @@ Run `just` by itself to see the interactive menu:
 | **clean** | `just clean` | Removes the `.venv` and clears the `uv` cache. |
 | **venv** | `just venv <name>` | Manually creates a new virtual environment if needed. |
 | **topdf** | `just topdf <file>` | Converts a notebook to a clean PDF (auto-downloads Chromium). |
+
+## Working With `uv`
+
+This repo uses `uv` with `pyproject.toml` + `uv.lock`.
+
+Add/remove packages (updates `uv.lock`):
+```bash
+# add a dependency
+uv add <package>
+
+# (optional) add to dev group
+uv add --group dev <package>
+
+# remove a dependency
+uv remove <package>
+```
+
+Install/sync what’s declared in the lockfile:
+```bash
+# uses uv.lock to create/update .venv
+uv sync
+
+# this project’s recommended shortcut
+just install
+```
+
+Lockfiles:
+- Commit `uv.lock` (so everyone uses the same resolved versions).
+- Do not edit `uv.lock` manually.
+- Never commit the generated `.venv/` folder.
