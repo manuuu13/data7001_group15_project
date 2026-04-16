@@ -1,6 +1,7 @@
 from __future__ import annotations
-import pandas as pd
+
 import re
+import pandas as pd
 
 
 def column_summary(series: pd.Series) -> str:
@@ -58,16 +59,21 @@ def print_dataset_summary(key: str, title: str, df: pd.DataFrame) -> None:
         print(column_summary(df[c]), end="")
 
 
+def style_pct(df: pd.DataFrame, cols: "all" | list[str] | None = None) -> pd.Styler:
+    if cols is None:
+        cols = [col for col in df.columns if "pct" in str(col).lower()]
+
+    if cols == "all":
+        return df.style.format("{:.2f}%")
+
+    return df.style.format("{:.2f}%", subset=cols)
+
+
 def extract_number(string: str) -> float | None:
     if pd.isna(string):
         return None
 
     clean_string = string.strip().lower()
-
-    # \d+      : 1 or more digits
-    # [.,:]    : followed by a dot, comma, or colon
-    # \d+      : followed by 1 or more digits
-    # |\d+     : OR just a standard whole number (fallback)
     match = re.search(r"\d+[.,:]\d+|\d+", clean_string)
     if match:
         num_str = match.group().replace(",", ".").replace(":", ".")
@@ -167,3 +173,4 @@ def dass21_stress_score_to_level(score: int | None) -> str | None:
         return "moderately_severe"
     else:
         return "severe"
+
