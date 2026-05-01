@@ -9,8 +9,10 @@ dependencies = [
     "numpy>=2.4.3",
     "pandas>=3.0.1",
     "pyarrow>=23.0.1",
+    "scikit-learn>=1.8.0",
     "scipy>=1.17.1",
     "seaborn>=0.13.2",
+    "statsmodels>=0.14.6",
 ]
 
 [dependency-groups]

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import re
 import pandas as pd
+import numpy as np
+from typing import Sequence
+from statsmodels.miscmodels.ordinal_model import OrderedResults, OrderedModel
+from scipy.stats import chi2_contingency
 
 
 def column_summary(series: pd.Series) -> str:
@@ -174,3 +178,83 @@ def dass21_stress_score_to_level(score: int | None) -> str | None:
     else:
         return "severe"
 
+
+def modal_value(series: pd.Series) -> str:
+    return str(series.mode(dropna=True).iloc[0])
+
+
+def build_analysis_df(
+    df: pd.DataFrame,
+    outcome: str,
+    predictors: Sequence[str],
+    controls: Sequence[str] | None = None,
+) -> pd.DataFrame:
+    controls = list(controls or [])
+    cols = [outcome, *predictors, *controls]
+    output = df.loc[:, cols].dropna().copy()
+
+    return output
+
+
+def build_design_matrix(
+    df: pd.DataFrame, predictors: Sequence[str], controls: Sequence[str] | None = None
+) -> pd.DataFrame:
+    controls = list(controls or [])
+    x_num = df.loc[:, predictors].astype(float)
+
+    if controls:
+        x_cat = pd.get_dummies(df.loc[:, controls], drop_first=True, dtype=float)
+        return pd.concat([x_num, x_cat], axis=1)
+
+    return x_num
+
+
+def fit_ordinal_logit(
+    df: pd.DataFrame,
+    outcome: str,
+    predictors: Sequence[str],
+    controls: Sequence[str] | None = None,
+) -> tuple[OrderedResults, pd.DataFrame, list[str]]:
+    controls = list(controls or [])
+    analysis_df = build_analysis_df(df, outcome, predictors, controls)
+
+    y = analysis_df[outcome].cat.codes
+    x = build_design_matrix(analysis_df, predictors, controls)
+
+    model = OrderedModel(y, x, dists="logit")
+    result = model.fit(method="bfgs", disp=False)
+
+    return result, analysis_df, x.columns.tolist()
+
+
+def tidy_or_table(
+    result: OrderedResults, feature_names: Sequence[str], clean_labels: dict[str, str]
+) -> pd.DataFrame:
+    params = result.params
+    conf = result.conf_int()
+    pvals = result.pvalues
+
+    slope_idx = [name for name in params.index if name in feature_names]
+
+    output = pd.DataFrame(
+        {
+            "term": slope_idx,
+            "coef_log_odds": params.loc[slope_idx].values,
+            "odds_ratio": np.exp(params.loc[slope_idx].values),
+            "ci_low": np.exp(conf.loc[slope_idx, 0].values),
+            "ci_high": np.exp(conf.loc[slope_idx, 1].values),
+            "p_value": pvals.loc[slope_idx].values,
+        }
+    )
+
+    output["label"] = output["term"].map(clean_labels).fillna(output["term"])
+    return output.sort_values("p_value").reset_index(drop=True)
+
+
+def cramers_v_from_table(ct: pd.DataFrame) -> float:
+    chi2, _, _, _ = chi2_contingency(ct)
+    n = float(ct.to_numpy().sum())
+    r, k = ct.shape
+    if min(r, k) <= 1 or n == 0:
+        return float("nan")
+    return float(np.sqrt(chi2 / (n * (min(r, k) - 1))))
