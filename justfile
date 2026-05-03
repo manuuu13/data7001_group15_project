@@ -1,6 +1,5 @@
 set windows-shell := ["powershell", "-NoProfile", "-Command"]
 
-CALL_RECIPE := just_executable() + " --justfile=" + justfile()
 RM_R := if os_family() == "windows" { "Remove-Item -Recurse" } else { "rm -r" }
 ON_ERROR_CONTINUE := if os_family() == "windows" { '; $ErrorActionPreference = "Continue"' } else { "|| true" }
 RM_PYCACHE := if os_family() == "windows" { 'Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force' } else { 'find . -depth -type d -name "__pycache__" -exec rm -r {} +' }

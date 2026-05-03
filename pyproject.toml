@@ -20,3 +20,15 @@ dev = [
     "ipykernel>=7.2.0",
     "nbconvert[webpdf]>=7.17.0",
 ]
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "venv",
+]
+line-length = 80
+indent-width = 4
+target-version = "py311"

@@ -63,7 +63,9 @@ def print_dataset_summary(key: str, title: str, df: pd.DataFrame) -> None:
         print(column_summary(df[c]), end="")
 
 
-def style_pct(df: pd.DataFrame, cols: "all" | list[str] | None = None) -> pd.Styler:
+def style_pct(
+    df: pd.DataFrame, cols: "all" | list[str] | None = None
+) -> pd.Styler:
     if cols is None:
         cols = [col for col in df.columns if "pct" in str(col).lower()]
 
@@ -197,13 +199,17 @@ def build_analysis_df(
 
 
 def build_design_matrix(
-    df: pd.DataFrame, predictors: Sequence[str], controls: Sequence[str] | None = None
+    df: pd.DataFrame,
+    predictors: Sequence[str],
+    controls: Sequence[str] | None = None,
 ) -> pd.DataFrame:
     controls = list(controls or [])
     x_num = df.loc[:, predictors].astype(float)
 
     if controls:
-        x_cat = pd.get_dummies(df.loc[:, controls], drop_first=True, dtype=float)
+        x_cat = pd.get_dummies(
+            df.loc[:, controls], drop_first=True, dtype=float
+        )
         return pd.concat([x_num, x_cat], axis=1)
 
     return x_num
@@ -228,7 +234,9 @@ def fit_ordinal_logit(
 
 
 def tidy_or_table(
-    result: OrderedResults, feature_names: Sequence[str], clean_labels: dict[str, str]
+    result: OrderedResults,
+    feature_names: Sequence[str],
+    clean_labels: dict[str, str],
 ) -> pd.DataFrame:
     params = result.params
     conf = result.conf_int()
